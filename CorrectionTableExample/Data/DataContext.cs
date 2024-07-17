@@ -25,6 +25,9 @@ public class DataContext : DbContext
             }
         }
 
+        ConfigureEntityCorrection<Product>();
+        ConfigureEntityCorrection<Customer>();
+
         // Konfiguration for EntityCorrection<T>
         void ConfigureEntityCorrection<T>() where T : class, IEntity
         {
@@ -44,9 +47,6 @@ public class DataContext : DbContext
                     pc.HasKey("Id");
                 });
         }
-
-        ConfigureEntityCorrection<Product>();
-        ConfigureEntityCorrection<Customer>();
     }
 }
 
