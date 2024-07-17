@@ -33,8 +33,7 @@ using (var context = new DataContext(options))
                 { "Name", "Updated Laptop" },
                 { "Price", "1200" }
             });
-    var correctedProduct = productService.GetEntityWithCorrections(product.Id);
-    Console.WriteLine($"Produkt efter korrektion: Id = {correctedProduct.Id}, Navn = {correctedProduct.Name}, Pris = {correctedProduct.Price}\n");
+    Console.WriteLine(); // Tilføj en tom linje for bedre læsbarhed
 
     // Anvend korrektioner på kunde
     Console.WriteLine("Anvender korrektioner på kunde...");
@@ -43,18 +42,39 @@ using (var context = new DataContext(options))
                 { "Email", "johndoe@example.com" },
                 { "DateOfBirth", "1991-02-02" }
             });
+    Console.WriteLine(); // Tilføj en tom linje for bedre læsbarhed
+
+    // Hent og vis korrektionshistorik for produkt
+    PrintCorrectionHistory(context, product, "produkt");
+    var correctedProduct = productService.GetEntityWithCorrections(product.Id);
+    Console.WriteLine($"Produkt efter korrektion: Id = {correctedProduct.Id}, Navn = {correctedProduct.Name}, Pris = {correctedProduct.Price}\n");
+
+
+    // Hent og vis korrektionshistorik for kunde
+    PrintCorrectionHistory(context, customer, "kunde");
+
     var correctedCustomer = customerService.GetEntityWithCorrections(customer.Id);
     Console.WriteLine($"Kunde efter korrektion: Id = {correctedCustomer.Id}, Navn = {correctedCustomer.Name}, Email = {correctedCustomer.Email}, Fødselsdato = {correctedCustomer.DateOfBirth}\n");
 
-    // Hent og vis korrektionshistorik for produkt
-    Console.WriteLine("Korrektionshistorik for produkt:");
-    var productCorrections = context.Set<EntityCorrection<Product>>()
+}
+
+static void PrintCorrectionHistory<TEntity>(DataContext context, TEntity entity, string entityName)
+        where TEntity : class, IEntity
+{
+    Console.WriteLine($"Korrektionshistorik for {entityName}:");
+    var corrections = context.Set<EntityCorrection<TEntity>>()
         .Include(ec => ec.PropertyCorrections)
-        .Where(ec => ec.OriginalEntityId == product.Id)
+        .Where(ec => ec.OriginalEntityId == entity.Id)
         .OrderBy(ec => ec.CorrectionDate)
         .ToList();
 
-    foreach (var correction in productCorrections)
+    if (!corrections.Any())
+    {
+        Console.WriteLine($"  Ingen korrektioner fundet for {entityName} med Id {entity.Id}");
+        return;
+    }
+
+    foreach (var correction in corrections)
     {
         Console.WriteLine($"  Korrektion dato: {correction.CorrectionDate}");
         foreach (var propCorrection in correction.PropertyCorrections)
@@ -62,21 +82,5 @@ using (var context = new DataContext(options))
             Console.WriteLine($"    {propCorrection.PropertyName}: {propCorrection.OldValue} -> {propCorrection.NewValue}");
         }
     }
-
-    // Hent og vis korrektionshistorik for kunde
-    Console.WriteLine("\nKorrektionshistorik for kunde:");
-    var customerCorrections = context.Set<EntityCorrection<Customer>>()
-        .Include(ec => ec.PropertyCorrections)
-        .Where(ec => ec.OriginalEntityId == customer.Id)
-        .OrderBy(ec => ec.CorrectionDate)
-        .ToList();
-
-    foreach (var correction in customerCorrections)
-    {
-        Console.WriteLine($"  Korrektion dato: {correction.CorrectionDate}");
-        foreach (var propCorrection in correction.PropertyCorrections)
-        {
-            Console.WriteLine($"    {propCorrection.PropertyName}: {propCorrection.OldValue} -> {propCorrection.NewValue}");
-        }
-    }
+    Console.WriteLine(); // Tilføj en tom linje for bedre læsbarhed
 }
